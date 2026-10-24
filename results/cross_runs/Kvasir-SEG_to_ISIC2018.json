@@ -1,0 +1,26 @@
+{
+ "source": "Kvasir-SEG",
+ "target": "ISIC2018",
+ "setting": "UNet(Kvasir-SEG→ISIC2018)",
+ "source_checkpoint": "checkpoints\\unet_Kvasir-SEG_720.pth",
+ "source_meta": {
+  "dataset": "Kvasir-SEG",
+  "setting": "n=720",
+  "n_train": 720,
+  "n_val": 80,
+  "best_epoch": 30,
+  "img_size": 256,
+  "batch_size": 16,
+  "lr": 0.0001,
+  "seed": 42,
+  "precision": "bf16 autocast（模型前向 bf16，损失/指标 fp32）",
+  "n_params": 31037633
+ },
+ "n_test": 500,
+ "test_macro_dice": 0.238664,
+ "dice_min": 0.0,
+ "dice_max": 0.813393,
+ "n_pred_empty": 12,
+ "modality_gap": "彩色内镜<->皮肤镜（近域跨集）",
+ "finished_at": "2026-10-24T21:54:29"
+}

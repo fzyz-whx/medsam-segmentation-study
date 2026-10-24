@@ -1,0 +1,26 @@
+{
+ "source": "Kvasir-SEG",
+ "target": "Montgomery",
+ "setting": "UNet(Kvasir-SEG→Montgomery)",
+ "source_checkpoint": "checkpoints\\unet_Kvasir-SEG_720.pth",
+ "source_meta": {
+  "dataset": "Kvasir-SEG",
+  "setting": "n=720",
+  "n_train": 720,
+  "n_val": 80,
+  "best_epoch": 30,
+  "img_size": 256,
+  "batch_size": 16,
+  "lr": 0.0001,
+  "seed": 42,
+  "precision": "bf16 autocast（模型前向 bf16，损失/指标 fp32）",
+  "n_params": 31037633
+ },
+ "n_test": 28,
+ "test_macro_dice": 0.206529,
+ "dice_min": 0.142433,
+ "dice_max": 0.337998,
+ "n_pred_empty": 0,
+ "modality_gap": "彩色内镜->灰度胸片（最大模态差）",
+ "finished_at": "2026-10-24T21:56:29"
+}

@@ -311,5 +311,853 @@
   "per_sample_file": "results/per_sample_B.csv",
   "pred_masks": "full 档位模型在每数据集前 20 张测试样本的预测 mask：results/preds_B/<dataset>/<sample_stem>.png（0/255，原始分辨率，与 preds_A 同样本便于四列对比）",
   "figure": "figures/learning_curve.pdf（+png，300dpi，由 --figure-only 从 metrics.csv 生成）"
+ },
+ "cross_dataset": {
+  "experiment": "实验C：跨数据集泛化（U-Net 甲->乙 vs MedSAM 零样本乙）",
+  "script": "scripts/cross_dataset.py",
+  "date": "2026-10-24T22:02:56",
+  "design": {
+   "pairs": [
+    "UNet(Kvasir-SEG n=720) -> ISIC2018 test 500",
+    "UNet(Kvasir-SEG n=720) -> Montgomery test 28",
+    "UNet(ISIC2018 n=1868) -> Kvasir-SEG test 200",
+    "UNet(ISIC2018 n=1868) -> Montgomery test 28"
+   ],
+   "rationale": "STATE.md Phase 1 建议：Kvasir-SEG<->ISIC2018 为彩色内镜 vs 皮肤镜近域跨集；->Montgomery 为彩色->灰度胸片最大模态差。源模型取实验 B full 档位（n=全部训练池）checkpoint。",
+   "modality_note": "Montgomery 为灰度胸片（PIL convert('RGB') 三通道复制），测试集仅 28 张，结论需标注小样本"
+  },
+  "protocol": {
+   "source_checkpoints": "checkpoints/unet_<ds>_<n>.pth（full 档位，含 meta；推理严格遵循 meta 的 img_size=256 / x/255 / mask>=128）",
+   "inference": "与实验 B evaluate_test 逐行同协议：图像 PIL 双线性 256x256 -> /255 -> UNet -> sigmoid -> 概率图双线性回原始分辨率 -> 0.5 阈值；GT 为原始分辨率 >=128 二值化",
+   "dice_convention": "与实验 A/B 一致：两空=1.0、恰一空=0.0、macro=算术平均",
+   "test_subsets": "与实验 A/B 同一测试子集：Kvasir-SEG test 200 全量 / ISIC2018 test 前 500/519 / Montgomery test 28 全量",
+   "medsam_reuse": "MedSAM 零样本(乙) 数字复用实验 A prompt_strategy/box 同测试集结果（脚本校验存在性与 n_samples 一致后写入；未做任何重推理）",
+   "seed": 42,
+   "determinism": "纯推理无随机性；仍统一 seed=42；模型加载自实验 B 落盘权重"
+  },
+  "results": {
+   "unet_cross": {
+    "UNet(Kvasir-SEG→ISIC2018)": {
+     "source": "Kvasir-SEG",
+     "target": "ISIC2018",
+     "n_test": 500,
+     "macro_dice": 0.238664,
+     "n_pred_empty": 12,
+     "source_checkpoint": "checkpoints\\unet_Kvasir-SEG_720.pth",
+     "source_meta": {
+      "dataset": "Kvasir-SEG",
+      "setting": "n=720",
+      "n_train": 720,
+      "n_val": 80,
+      "best_epoch": 30,
+      "img_size": 256,
+      "batch_size": 16,
+      "lr": 0.0001,
+      "seed": 42,
+      "precision": "bf16 autocast（模型前向 bf16，损失/指标 fp32）",
+      "n_params": 31037633
+     },
+     "dice_min": 0.0,
+     "dice_max": 0.813393,
+     "modality_gap": "彩色内镜<->皮肤镜（近域跨集）",
+     "unet_indomain_reference": {
+      "macro_dice": 0.829606,
+      "n_train": 1868,
+      "source": "results/metrics.csv experiment=fewshot setting=n=1868"
+     },
+     "drop_vs_indomain": 0.590942
+    },
+    "UNet(Kvasir-SEG→Montgomery)": {
+     "source": "Kvasir-SEG",
+     "target": "Montgomery",
+     "n_test": 28,
+     "macro_dice": 0.206529,
+     "n_pred_empty": 0,
+     "source_checkpoint": "checkpoints\\unet_Kvasir-SEG_720.pth",
+     "source_meta": {
+      "dataset": "Kvasir-SEG",
+      "setting": "n=720",
+      "n_train": 720,
+      "n_val": 80,
+      "best_epoch": 30,
+      "img_size": 256,
+      "batch_size": 16,
+      "lr": 0.0001,
+      "seed": 42,
+      "precision": "bf16 autocast（模型前向 bf16，损失/指标 fp32）",
+      "n_params": 31037633
+     },
+     "dice_min": 0.142433,
+     "dice_max": 0.337998,
+     "modality_gap": "彩色内镜->灰度胸片（最大模态差）"
+    },
+    "UNet(ISIC2018→Kvasir-SEG)": {
+     "source": "ISIC2018",
+     "target": "Kvasir-SEG",
+     "n_test": 200,
+     "macro_dice": 0.373964,
+     "n_pred_empty": 0,
+     "source_checkpoint": "checkpoints\\unet_ISIC2018_1868.pth",
+     "source_meta": {
+      "dataset": "ISIC2018",
+      "setting": "n=1868",
+      "n_train": 1868,
+      "n_val": 207,
+      "best_epoch": 26,
+      "img_size": 256,
+      "batch_size": 16,
+      "lr": 0.0001,
+      "seed": 42,
+      "precision": "bf16 autocast（模型前向 bf16，损失/指标 fp32）",
+      "n_params": 31037633
+     },
+     "dice_min": 0.025995,
+     "dice_max": 0.879625,
+     "modality_gap": "彩色内镜<->皮肤镜（近域跨集）",
+     "unet_indomain_reference": {
+      "macro_dice": 0.570244,
+      "n_train": 720,
+      "source": "results/metrics.csv experiment=fewshot setting=n=720"
+     },
+     "drop_vs_indomain": 0.19628
+    },
+    "UNet(ISIC2018→Montgomery)": {
+     "source": "ISIC2018",
+     "target": "Montgomery",
+     "n_test": 28,
+     "macro_dice": 0.666025,
+     "n_pred_empty": 0,
+     "source_checkpoint": "checkpoints\\unet_ISIC2018_1868.pth",
+     "source_meta": {
+      "dataset": "ISIC2018",
+      "setting": "n=1868",
+      "n_train": 1868,
+      "n_val": 207,
+      "best_epoch": 26,
+      "img_size": 256,
+      "batch_size": 16,
+      "lr": 0.0001,
+      "seed": 42,
+      "precision": "bf16 autocast（模型前向 bf16，损失/指标 fp32）",
+      "n_params": 31037633
+     },
+     "dice_min": 0.45318,
+     "dice_max": 0.804178,
+     "modality_gap": "彩色内镜->灰度胸片（最大模态差）"
+    }
+   },
+   "medsam_zero_shot": {
+    "Kvasir-SEG": {
+     "macro_dice": 0.930684,
+     "n_samples": 200,
+     "source": "results/metrics.csv experiment=prompt_strategy setting=box（实验 A 同测试集数字，直接复用）"
+    },
+    "ISIC2018": {
+     "macro_dice": 0.929824,
+     "n_samples": 500,
+     "source": "results/metrics.csv experiment=prompt_strategy setting=box（实验 A 同测试集数字，直接复用）"
+    },
+    "Montgomery": {
+     "macro_dice": 0.976842,
+     "n_samples": 28,
+     "source": "results/metrics.csv experiment=prompt_strategy setting=box（实验 A 同测试集数字，直接复用）"
+    }
+   }
+  },
+  "per_sample_file": "results/per_sample_C.csv",
+  "markers": "results/cross_runs/<src>_to_<tgt>.json"
+ },
+ "final_report": {
+  "phase": "Phase 4 图表汇总（summary.json 最终版收口）",
+  "date": "2026-10-24T22:32:11",
+  "script": "scripts/finalize_summary.py",
+  "conventions": {
+   "dice_definition": "逐样本 Dice = 2|P∩G|/(|P|+|G|)；macro Dice = 逐样本 Dice 的算术平均",
+   "empty_sample_handling": "空样本处理惯例（医学分割常用约定，三实验统一）：GT 与预测同为空记 Dice=1.0（两空一致）；恰一方为空记 0.0。三数据集 Phase 1 已验证无空 GT；实验 A 全部 2912 个预测无一为空（n_pred_empty=0）；实验 B 少样本档位存在空预测（Kvasir n=20/n=100 各 5 个、ISIC n=20 9 个 / n=100 2 个、全量档 0 个），实验 C 跨数据集存在空预测（Kvasir→ISIC 12 个），均按惯例记 0 计入 macro，逐样本明细见 results/per_sample_*.csv 的 pred_empty 列，各组合空预测数见 summary 各实验 results.*.n_pred_empty（已与逐样本 CSV 重算核对一致）",
+   "point_prompt_implementation": "MedSAM 官方推理代码仅支持 box 提示（训练亦只用框），故点提示按实验方案指示转为伪框：以给定点为中心、半边长=0.05*max(H,W)（即边长为图像长边 10%）的正方形，clamp 到图像内，走与框提示完全相同的通路；不使用任何 GT 尺寸信息。",
+   "randomness": "主种子 42；扰动框/随机点由逐样本种子 random.Random('42|{dataset}|{setting}|{sample_id}') 生成；U-Net 训练 random/numpy/torch/cuda 全 seed=42",
+   "test_subsets": "三实验同一测试子集：Kvasir-SEG test 200 全量；ISIC2018 test 前 500/519（splits.json seed=42 洗牌顺序）；Montgomery test 28 全量"
+  },
+  "figures": {
+   "learning_curve": {
+    "path": "figures/learning_curve.pdf（+png，300dpi，SimHei）",
+    "generated_by": "scripts/unet.py --figure-only（从 results/metrics.csv 确定性重画）",
+    "medsam_reference_check": "Phase 4 校验通过：文件存在（34,553B）且两子图均有红色虚线 MedSAM 参考线，图例值 0.9307（Kvasir）/ 0.9298（ISIC）与 metrics.csv box 行一致（PNG 目检）"
+   },
+   "qualitative": {
+    "path": "figures/qualitative.pdf（+png，300dpi，SimHei）",
+    "generated_by": "scripts/qualitative_figure.py",
+    "layout": "三数据集块 × (2 好 + 2 差) case × 四列（原图/GT/MedSAM 框提示/U-Net 全量档）；Montgomery 无 U-Net 全量档模型，该列留白注记（如实）",
+    "selection_protocol": "仅在 results/preds_A、preds_B 已保存预测的前 20 张测试样本内挑选；Kvasir-SEG/ISIC2018 按 (MedSAM box Dice + U-Net full Dice)/2 排序，好 case=最高 2 例、差 case=最低 2 例（并列按 sample_id 升序）；Montgomery 无 U-Net 预测，按 MedSAM box Dice 排序。Dice 数值取自 results/per_sample_A.csv（setting=box）与 results/per_sample_B.csv（setting=n=720/n=1868），未重算。",
+    "case_list_file": "results/qualitative_cases.json",
+    "dice_annotations_source": "results/per_sample_A.csv（box）、results/per_sample_B.csv（n=720/n=1868）"
+   },
+   "table1_source": "results/dataset_stats.csv（分辨率范围为磁盘实测，与 Phase 1 stats.json 一致）"
+  },
+  "paper_number_checklist": {
+   "note": "论文将引用的全部实验数字→results/ 源文件映射；verified=true 表示本次运行中已从源文件实时重读并逐项比对一致（共 94 项，失败 0 项）",
+   "n_checked": 94,
+   "n_failed": 0,
+   "items": [
+    {
+     "item": "表1 Kvasir-SEG n_pairs",
+     "value": 1000,
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 Kvasir-SEG n_train",
+     "value": 800,
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 Kvasir-SEG n_test",
+     "value": 200,
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 Kvasir-SEG n_test_used_in_experiments",
+     "value": 200,
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 Kvasir-SEG resolution_range",
+     "value": "W 332–1920 px × H 352–1072 px",
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 ISIC2018 n_pairs",
+     "value": 2594,
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 ISIC2018 n_train",
+     "value": 2075,
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 ISIC2018 n_test",
+     "value": 519,
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 ISIC2018 n_test_used_in_experiments",
+     "value": 500,
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 ISIC2018 resolution_range",
+     "value": "W 576–6748 px × H 540–4499 px",
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 Montgomery n_pairs",
+     "value": 138,
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 Montgomery n_train",
+     "value": 110,
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 Montgomery n_test",
+     "value": 28,
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 Montgomery n_test_used_in_experiments",
+     "value": 28,
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表1 Montgomery resolution_range",
+     "value": "W 4020–4892 px × H 4020–4892 px",
+     "source_file": "results/dataset_stats.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Kvasir-SEG box macro Dice",
+     "value": 0.930684,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Kvasir-SEG box n_samples",
+     "value": 200,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Kvasir-SEG box_perturb_10pct macro Dice",
+     "value": 0.875123,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Kvasir-SEG box_perturb_10pct n_samples",
+     "value": 200,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Kvasir-SEG center_point macro Dice",
+     "value": 0.092515,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Kvasir-SEG center_point n_samples",
+     "value": 200,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Kvasir-SEG random_point macro Dice",
+     "value": 0.083968,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Kvasir-SEG random_point n_samples",
+     "value": 200,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 ISIC2018 box macro Dice",
+     "value": 0.929824,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 ISIC2018 box n_samples",
+     "value": 500,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 ISIC2018 box_perturb_10pct macro Dice",
+     "value": 0.884735,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 ISIC2018 box_perturb_10pct n_samples",
+     "value": 500,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 ISIC2018 center_point macro Dice",
+     "value": 0.148288,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 ISIC2018 center_point n_samples",
+     "value": 500,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 ISIC2018 random_point macro Dice",
+     "value": 0.102453,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 ISIC2018 random_point n_samples",
+     "value": 500,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Montgomery box macro Dice",
+     "value": 0.976842,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Montgomery box n_samples",
+     "value": 28,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Montgomery box_perturb_10pct macro Dice",
+     "value": 0.867897,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Montgomery box_perturb_10pct n_samples",
+     "value": 28,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Montgomery center_point macro Dice",
+     "value": 6.9e-05,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Montgomery center_point n_samples",
+     "value": 28,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Montgomery random_point macro Dice",
+     "value": 0.031938,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表2 Montgomery random_point n_samples",
+     "value": 28,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表3 Kvasir-SEG n=20 macro Dice",
+     "value": 0.395581,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表3 Kvasir-SEG n=100 macro Dice",
+     "value": 0.44156,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表3 Kvasir-SEG n=720 macro Dice",
+     "value": 0.570244,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表3 Kvasir-SEG MedSAM 零样本参考线",
+     "value": 0.930684,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表3 ISIC2018 n=20 macro Dice",
+     "value": 0.61486,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表3 ISIC2018 n=100 macro Dice",
+     "value": 0.725499,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表3 ISIC2018 n=1868 macro Dice",
+     "value": 0.829606,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表3 ISIC2018 MedSAM 零样本参考线",
+     "value": 0.929824,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图2 Kvasir MedSAM 参考线值",
+     "value": 0.930684,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图2 ISIC2018 MedSAM 参考线值",
+     "value": 0.929824,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表4 UNet(Kvasir-SEG→ISIC2018) → ISIC2018 macro Dice",
+     "value": 0.238664,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表4 UNet(Kvasir-SEG→Montgomery) → Montgomery macro Dice",
+     "value": 0.206529,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表4 UNet(ISIC2018→Kvasir-SEG) → Kvasir-SEG macro Dice",
+     "value": 0.373964,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表4 UNet(ISIC2018→Montgomery) → Montgomery macro Dice",
+     "value": 0.666025,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表4 MedSAM(Kvasir-SEG) → Kvasir-SEG macro Dice",
+     "value": 0.930684,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表4 MedSAM(ISIC2018) → ISIC2018 macro Dice",
+     "value": 0.929824,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表4 MedSAM(Montgomery) → Montgomery macro Dice",
+     "value": 0.976842,
+     "source_file": "results/metrics.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表4 UNet(ISIC2018→Kvasir-SEG) 跨集衰减量 drop_vs_indomain",
+     "value": 0.19628,
+     "source_file": "results/summary.json",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "表4 UNet(Kvasir-SEG→ISIC2018) 跨集衰减量 drop_vs_indomain",
+     "value": 0.590942,
+     "source_file": "results/summary.json",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "U-Net 参数量（Kvasir-SEG marker）",
+     "value": 31037633,
+     "source_file": "results/unet_runs/Kvasir-SEG_720.json",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "U-Net 参数量（ISIC2018 marker）",
+     "value": 31037633,
+     "source_file": "results/unet_runs/ISIC2018_1868.json",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "Kvasir 框与官方 kavsir_bboxes 平均 IoU",
+     "value": 0.914998,
+     "source_file": "results/summary.json",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "实验A Kvasir-SEG box 空预测数",
+     "value": 0,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "实验A ISIC2018 box 空预测数",
+     "value": 0,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "实验A Montgomery box 空预测数",
+     "value": 0,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "实验B Kvasir-SEG n=20 空预测数",
+     "value": 5,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "实验B Kvasir-SEG n=100 空预测数",
+     "value": 5,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "实验B Kvasir-SEG n=720 空预测数",
+     "value": 0,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "实验B ISIC2018 n=20 空预测数",
+     "value": 9,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "实验B ISIC2018 n=100 空预测数",
+     "value": 2,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "实验B ISIC2018 n=1868 空预测数",
+     "value": 0,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "实验C UNet(Kvasir-SEG→ISIC2018) 空预测数",
+     "value": 12,
+     "source_file": "results/per_sample_C.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "实验C UNet(Kvasir-SEG→Montgomery) 空预测数",
+     "value": 0,
+     "source_file": "results/per_sample_C.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "实验C UNet(ISIC2018→Kvasir-SEG) 空预测数",
+     "value": 0,
+     "source_file": "results/per_sample_C.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "实验C UNet(ISIC2018→Montgomery) 空预测数",
+     "value": 0,
+     "source_file": "results/per_sample_C.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 Kvasir-SEG 好①(cju8bh8surexp098) MedSAM Dice",
+     "value": 0.974202,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 Kvasir-SEG 好①(cju8bh8surexp098) U-Net Dice",
+     "value": 0.910877,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 Kvasir-SEG 好②(cju7d9seq29zd087) MedSAM Dice",
+     "value": 0.980302,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 Kvasir-SEG 好②(cju7d9seq29zd087) U-Net Dice",
+     "value": 0.810427,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 Kvasir-SEG 差①(cju0roawvklrq079) MedSAM Dice",
+     "value": 0.177513,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 Kvasir-SEG 差①(cju0roawvklrq079) U-Net Dice",
+     "value": 0.033089,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 Kvasir-SEG 差②(cju8abobpqbir081) MedSAM Dice",
+     "value": 0.315476,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 Kvasir-SEG 差②(cju8abobpqbir081) U-Net Dice",
+     "value": 0.341009,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 ISIC2018 好①(ISIC_0000368) MedSAM Dice",
+     "value": 0.965526,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 ISIC2018 好①(ISIC_0000368) U-Net Dice",
+     "value": 0.97317,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 ISIC2018 好②(ISIC_0000385) MedSAM Dice",
+     "value": 0.948125,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 ISIC2018 好②(ISIC_0000385) U-Net Dice",
+     "value": 0.947627,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 ISIC2018 差①(ISIC_0013910) MedSAM Dice",
+     "value": 0.91309,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 ISIC2018 差①(ISIC_0013910) U-Net Dice",
+     "value": 0.296971,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 ISIC2018 差②(ISIC_0011303) MedSAM Dice",
+     "value": 0.903232,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 ISIC2018 差②(ISIC_0011303) U-Net Dice",
+     "value": 0.725797,
+     "source_file": "results/per_sample_B.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 Montgomery 好①(MCUCXR_0101_0) MedSAM Dice",
+     "value": 0.991398,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 Montgomery 好②(MCUCXR_0099_0) MedSAM Dice",
+     "value": 0.988706,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 Montgomery 差①(MCUCXR_0150_1) MedSAM Dice",
+     "value": 0.932585,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    },
+    {
+     "item": "图3 Montgomery 差②(MCUCXR_0041_0) MedSAM Dice",
+     "value": 0.956103,
+     "source_file": "results/per_sample_A.csv",
+     "locator": "<见上方描述>",
+     "verified": true
+    }
+   ]
+  }
  }
 }

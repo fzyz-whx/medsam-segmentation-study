@@ -1,0 +1,4 @@
+dataset,modality,task,source,n_pairs,n_train,n_test,n_test_used_in_experiments,min_width_px,min_height_px,max_width_px,max_height_px,resolution_range
+Kvasir-SEG,彩色内镜（结直肠息肉）,胃肠息肉分割,官方数据集（datasets.simula.no/kvasir-seg），经 ModelScope OmniData/Kvasir-SEG 官方原包镜像下载（字节数与官方 zip 一致）,1000,800,200,200,332,352,1920,1072,W 332–1920 px × H 352–1072 px
+ISIC2018,皮肤镜（dermoscopy）,皮肤病变分割,ISIC 2018 Challenge Task 1 官方包（isic-challenge-data.s3.amazonaws.com），经 ModelScope OmniData/ISIC_2018_Task_1 镜像下载（sha256 与官方一致）,2594,2075,519,500,576,540,6748,4499,W 576–6748 px × H 540–4499 px
+Montgomery,灰度胸部 X 光（CXR）,肺野分割（左右肺 mask 并集）,NLM Montgomery County CXR Set 官方包（data.lhncbc.nlm.nih.gov），经 hf-mirror 镜像下载（sha256 校验通过）,138,110,28,28,4020,4020,4892,4892,W 4020–4892 px × H 4020–4892 px

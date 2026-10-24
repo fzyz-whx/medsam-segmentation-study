@@ -1,0 +1,26 @@
+{
+ "source": "ISIC2018",
+ "target": "Montgomery",
+ "setting": "UNet(ISIC2018→Montgomery)",
+ "source_checkpoint": "checkpoints\\unet_ISIC2018_1868.pth",
+ "source_meta": {
+  "dataset": "ISIC2018",
+  "setting": "n=1868",
+  "n_train": 1868,
+  "n_val": 207,
+  "best_epoch": 26,
+  "img_size": 256,
+  "batch_size": 16,
+  "lr": 0.0001,
+  "seed": 42,
+  "precision": "bf16 autocast（模型前向 bf16，损失/指标 fp32）",
+  "n_params": 31037633
+ },
+ "n_test": 28,
+ "test_macro_dice": 0.666025,
+ "dice_min": 0.45318,
+ "dice_max": 0.804178,
+ "n_pred_empty": 0,
+ "modality_gap": "彩色内镜->灰度胸片（最大模态差）",
+ "finished_at": "2026-10-24T21:58:30"
+}

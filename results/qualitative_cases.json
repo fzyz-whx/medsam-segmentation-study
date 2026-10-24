@@ -1,0 +1,108 @@
+{
+ "selection_protocol": "仅在 results/preds_A、preds_B 已保存预测的前 20 张测试样本内挑选；Kvasir-SEG/ISIC2018 按 (MedSAM box Dice + U-Net full Dice)/2 排序，好 case=最高 2 例、差 case=最低 2 例（并列按 sample_id 升序）；Montgomery 无 U-Net 预测，按 MedSAM box Dice 排序。Dice 数值取自 results/per_sample_A.csv（setting=box）与 results/per_sample_B.csv（setting=n=720/n=1868），未重算。",
+ "date": "2026-10-24T22:23:48",
+ "cases": {
+  "Kvasir-SEG": [
+   {
+    "kind": "好①",
+    "stem": "cju8bh8surexp0987o5pzklk1",
+    "sample_id": "cju8bh8surexp0987o5pzklk1.jpg",
+    "score": 0.94254,
+    "dice_medsam": 0.974202,
+    "dice_unet": 0.910877
+   },
+   {
+    "kind": "好②",
+    "stem": "cju7d9seq29zd0871nzl2uu5m",
+    "sample_id": "cju7d9seq29zd0871nzl2uu5m.jpg",
+    "score": 0.895365,
+    "dice_medsam": 0.980302,
+    "dice_unet": 0.810427
+   },
+   {
+    "kind": "差①",
+    "stem": "cju0roawvklrq0799vmjorwfv",
+    "sample_id": "cju0roawvklrq0799vmjorwfv.jpg",
+    "score": 0.105301,
+    "dice_medsam": 0.177513,
+    "dice_unet": 0.033089
+   },
+   {
+    "kind": "差②",
+    "stem": "cju8abobpqbir08189u01huru",
+    "sample_id": "cju8abobpqbir08189u01huru.jpg",
+    "score": 0.328242,
+    "dice_medsam": 0.315476,
+    "dice_unet": 0.341009
+   }
+  ],
+  "ISIC2018": [
+   {
+    "kind": "好①",
+    "stem": "ISIC_0000368",
+    "sample_id": "ISIC_0000368.jpg",
+    "score": 0.969348,
+    "dice_medsam": 0.965526,
+    "dice_unet": 0.97317
+   },
+   {
+    "kind": "好②",
+    "stem": "ISIC_0000385",
+    "sample_id": "ISIC_0000385.jpg",
+    "score": 0.947876,
+    "dice_medsam": 0.948125,
+    "dice_unet": 0.947627
+   },
+   {
+    "kind": "差①",
+    "stem": "ISIC_0013910",
+    "sample_id": "ISIC_0013910.jpg",
+    "score": 0.605031,
+    "dice_medsam": 0.91309,
+    "dice_unet": 0.296971
+   },
+   {
+    "kind": "差②",
+    "stem": "ISIC_0011303",
+    "sample_id": "ISIC_0011303.jpg",
+    "score": 0.814515,
+    "dice_medsam": 0.903232,
+    "dice_unet": 0.725797
+   }
+  ],
+  "Montgomery": [
+   {
+    "kind": "好①",
+    "stem": "MCUCXR_0101_0",
+    "sample_id": "MCUCXR_0101_0.png",
+    "score": 0.991398,
+    "dice_medsam": 0.991398,
+    "dice_unet": null
+   },
+   {
+    "kind": "好②",
+    "stem": "MCUCXR_0099_0",
+    "sample_id": "MCUCXR_0099_0.png",
+    "score": 0.988706,
+    "dice_medsam": 0.988706,
+    "dice_unet": null
+   },
+   {
+    "kind": "差①",
+    "stem": "MCUCXR_0150_1",
+    "sample_id": "MCUCXR_0150_1.png",
+    "score": 0.932585,
+    "dice_medsam": 0.932585,
+    "dice_unet": null
+   },
+   {
+    "kind": "差②",
+    "stem": "MCUCXR_0041_0",
+    "sample_id": "MCUCXR_0041_0.png",
+    "score": 0.956103,
+    "dice_medsam": 0.956103,
+    "dice_unet": null
+   }
+  ]
+ }
+}

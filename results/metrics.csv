@@ -17,3 +17,10 @@ fewshot,Kvasir-SEG,n=720,200,0.570244
 fewshot,ISIC2018,n=20,500,0.614860
 fewshot,ISIC2018,n=100,500,0.725499
 fewshot,ISIC2018,n=1868,500,0.829606
+cross_dataset,ISIC2018,UNet(Kvasir-SEG→ISIC2018),500,0.238664
+cross_dataset,Montgomery,UNet(Kvasir-SEG→Montgomery),28,0.206529
+cross_dataset,Kvasir-SEG,UNet(ISIC2018→Kvasir-SEG),200,0.373964
+cross_dataset,Montgomery,UNet(ISIC2018→Montgomery),28,0.666025
+cross_dataset,Kvasir-SEG,MedSAM(Kvasir-SEG),200,0.930684
+cross_dataset,ISIC2018,MedSAM(ISIC2018),500,0.929824
+cross_dataset,Montgomery,MedSAM(Montgomery),28,0.976842
