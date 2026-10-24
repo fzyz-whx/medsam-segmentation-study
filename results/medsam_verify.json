@@ -1,0 +1,25 @@
+{
+  "path": "checkpoints\\medsam_vit_b.pth",
+  "exists": true,
+  "size_bytes": 375049145,
+  "torch_load_ok": true,
+  "n_keys": 314,
+  "first_keys": [
+    "image_encoder.neck.0.weight",
+    "image_encoder.neck.1.weight",
+    "image_encoder.neck.1.bias",
+    "image_encoder.neck.2.weight",
+    "image_encoder.neck.3.weight",
+    "image_encoder.neck.3.bias",
+    "image_encoder.patch_embed.proj.weight",
+    "image_encoder.patch_embed.proj.bias"
+  ],
+  "prefix_ok": true,
+  "error": null,
+  "all_key_prefixes": [
+    "image_encoder",
+    "mask_decoder",
+    "prompt_encoder"
+  ],
+  "loaded_object_type": "dict"
+}

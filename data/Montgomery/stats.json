@@ -1,0 +1,43 @@
+{
+  "dataset": "Montgomery",
+  "full_name": "Montgomery County CXR Set (NLM, 胸片肺分割)",
+  "reference": "Jaeger et al., 'Two public chest X-ray datasets for computer-aided screening', PMC4138378, 2014",
+  "source_url": "https://hf-mirror.com/datasets/Famatsu123/montgomery-shenzhen-tuberculosis-cxr/resolve/main/MontgomerySet.zip",
+  "origin_url": "https://data.lhncbc.nlm.nih.gov/public/Tuberculosis-Chest-X-ray-Datasets/Montgomery-County-CXR-Set/MontgomerySet/index.html",
+  "download_method": "hf-mirror (HF_ENDPOINT=https://hf-mirror.com) 直下 Famatsu123/montgomery-shenzhen-tuberculosis-cxr 仓库内的 MontgomerySet.zip (NLM 原始目录结构镜像); GitHub release 无该数据集, ModelScope 无结果",
+  "zip_info": {
+    "zip_size_bytes": 616701553,
+    "zip_sha256": "e1543a5590b0d9293c951aece12a7a84156d42e33d86a76ca64c9450748e8392",
+    "zip_crc_ok": true
+  },
+  "structure": {
+    "images": "data/Montgomery/images/<case>.png (原始 CXR, 字节级拷贝)",
+    "masks": "data/Montgomery/masks/<case>.png (ManualMask leftMask|rightMask 并集, 0/255)",
+    "raw": "data/Montgomery/raw/MontgomerySet/ (解压: CXR_png/ClinicalReadings/ManualMask{leftMask,rightMask})"
+  },
+  "verification": {
+    "pairs": 138,
+    "images_count": 138,
+    "masks_count": 138,
+    "official_declared_count": 138,
+    "count_matches_official": true,
+    "image_size_distribution": {
+      "4892x4020": 41,
+      "4020x4892": 97
+    },
+    "image_modes": {
+      "L": 138
+    },
+    "image_mask_same_size": true,
+    "size_mismatch_cases": [],
+    "unreadable_cases": [],
+    "mask_nonbinary_cases": [],
+    "all_checks_passed": true
+  },
+  "size_policy": "全部 138 对图/mask 同尺寸, 无需重采样对齐; 训练/推理时按模型输入统一 resize (MedSAM: 1024x1024; U-Net: 256x256, mask 用最近邻插值)",
+  "splits_file": "data/Montgomery/splits.json",
+  "split_sizes": {
+    "train": 110,
+    "test": 28
+  }
+}

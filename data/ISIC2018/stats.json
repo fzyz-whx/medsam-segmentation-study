@@ -1,0 +1,92 @@
+{
+ "dataset": "ISIC2018_Task1",
+ "task": "skin lesion segmentation (Task 1)",
+ "source": {
+  "mirror": "ModelScope dataset OmniData/ISIC_2018_Task_1 (mirrors the official ISIC 2018 Task 1 zips verbatim)",
+  "url": "https://modelscope.cn/datasets/OmniData/ISIC_2018_Task_1",
+  "file": "raw/ISIC_2018_Task_1.tar.gz",
+  "direct_download_url": "https://modelscope.cn/datasets/OmniData/ISIC_2018_Task_1/resolve/master/raw/ISIC_2018_Task_1.tar.gz",
+  "archive_sha256": "506bacda9e63668268ab1727665563c1de85504095fca7c99dc2da3cee5eb87a",
+  "archive_bytes": 13799882093,
+  "official_origin": "ISIC 2018 challenge (challenge.isic-archive.com), data hosted at isic-challenge-data.s3.amazonaws.com/2018/",
+  "download_method": "curl 8-way segmented range download with resume (scripts/isic2018_download_seg.sh); sha256 verified equal to ModelScope API declaration",
+  "mirror_selection": "hf-mirror searched first per task rules: candidates zs389/isic2018Task1-2Training & cs198-cvmig & surajbijjahalli are classification-format parquets (no masks); MedOtter/ISIC2018 is full-res parquet with image/mask but hf-mirror gave 284KB/s (26h ETA); fell back to ModelScope official archive at 6-8MB/s"
+ },
+ "normalization": {
+  "resize_applied": "none (raw official resolution kept on disk)",
+  "resize_plan": "per-model resize at experiment time: 1024x1024 for MedSAM inference, 256x256 for U-Net training; images and masks resized with identical geometry"
+ },
+ "pairs": 2594,
+ "official_declared_training_pairs": 2594,
+ "count_matches_official": true,
+ "images_dir": "data\\ISIC2018\\images",
+ "masks_dir": "data\\ISIC2018\\masks",
+ "missing_masks": [],
+ "unreadable": [],
+ "size_mismatch_count": 0,
+ "size_mismatch_examples": [],
+ "distinct_image_sizes": 206,
+ "top_image_sizes": [
+  [
+   "4288x2848",
+   558
+  ],
+  [
+   "1024x768",
+   556
+  ],
+  [
+   "3008x2000",
+   379
+  ],
+  [
+   "3872x2592",
+   125
+  ],
+  [
+   "3024x2016",
+   100
+  ],
+  [
+   "767x576",
+   63
+  ],
+  [
+   "2048x1536",
+   56
+  ],
+  [
+   "3072x2304",
+   53
+  ],
+  [
+   "1504x1129",
+   50
+  ],
+  [
+   "919x802",
+   49
+  ]
+ ],
+ "image_wh_min": [
+  576,
+  540
+ ],
+ "image_wh_max": [
+  6748,
+  4499
+ ],
+ "mask_modes": {
+  "L": 2594
+ },
+ "mask_value_sets_sample": {
+  "(0, 255)": 200
+ },
+ "split": {
+  "seed": 42,
+  "ratio": "8:2",
+  "train": 2075,
+  "test": 519
+ },
+ "verification_passed": true
+}

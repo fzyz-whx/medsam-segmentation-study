@@ -6,7 +6,8 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-BIB = HERE.parent / "paper" / "refs.bib"
+PAPER = HERE.parent / "paper"
+BIB = PAPER / "refs.bib"
 
 s = BIB.read_text(encoding="utf-8")
 keys = [k.strip() for _, k in re.findall(r"@(\w+)\{([^,]+),", s)]
@@ -15,17 +16,17 @@ aux_lines = [
     r"\citation{" + ",".join(keys) + "}",
     r"\bibdata{refs}",
 ]
-aux = HERE / "_check.aux"
+aux = PAPER / "_check.aux"
 aux.write_text("\n".join(aux_lines) + "\n", encoding="utf-8")
 
 r = subprocess.run(
-    ["bibtex", "_check"], cwd=str(HERE), capture_output=True, text=True, encoding="utf-8", errors="replace"
+    ["bibtex", "_check"], cwd=str(PAPER), capture_output=True, text=True, encoding="utf-8", errors="replace"
 )
 print(r.stdout)
 print(r.stderr)
 print("bibtex_exit =", r.returncode)
 
-blg = (HERE / "_check.blg").read_text(encoding="utf-8", errors="replace") if (HERE / "_check.blg").exists() else ""
+blg = (PAPER / "_check.blg").read_text(encoding="utf-8", errors="replace") if (PAPER / "_check.blg").exists() else ""
 errors = [ln for ln in blg.splitlines() if "error" in ln.lower()]
 warns = [ln for ln in blg.splitlines() if "warning" in ln.lower()]
 print("blg_errors =", len(errors))
@@ -35,11 +36,11 @@ print("blg_warnings =", len(warns))
 for ln in warns:
     print("  WARN:", ln)
 
-bbl = HERE / "_check.bbl"
+bbl = PAPER / "_check.bbl"
 n_entries = len(re.findall(r"\\bibitem", bbl.read_text(encoding="utf-8", errors="replace"))) if bbl.exists() else 0
 print("bbl_bibitems =", n_entries)
 
-for f in (aux, HERE / "_check.blg", bbl):
+for f in (aux, PAPER / "_check.blg", bbl):
     if f.exists():
         f.unlink()
 
