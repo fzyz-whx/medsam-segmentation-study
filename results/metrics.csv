@@ -11,3 +11,9 @@ prompt_strategy,Montgomery,box,28,0.976842
 prompt_strategy,Montgomery,box_perturb_10pct,28,0.867897
 prompt_strategy,Montgomery,center_point,28,0.000069
 prompt_strategy,Montgomery,random_point,28,0.031938
+fewshot,Kvasir-SEG,n=20,200,0.395581
+fewshot,Kvasir-SEG,n=100,200,0.441560
+fewshot,Kvasir-SEG,n=720,200,0.570244
+fewshot,ISIC2018,n=20,500,0.614860
+fewshot,ISIC2018,n=100,500,0.725499
+fewshot,ISIC2018,n=1868,500,0.829606

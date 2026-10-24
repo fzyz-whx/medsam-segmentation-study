@@ -141,5 +141,175 @@
   },
   "per_sample_file": "results/per_sample_A.csv",
   "pred_masks": "每数据集前 20 张测试样本的 box 提示预测 mask，存 results/preds_A/<dataset>/<sample_stem>.png（0/255，原始分辨率）"
+ },
+ "fewshot": {
+  "experiment": "实验B：U-Net 少样本学习曲线",
+  "script": "scripts/unet.py",
+  "date": "2026-10-24T21:28:36",
+  "model": {
+   "name": "标准 2D U-Net（自实现，scripts/unet.py）",
+   "architecture": "4 层下采样，基础通道 64 -> 瓶颈 1024，DoubleConv=Conv3x3-BN-ReLU x2，转置卷积上采样+跳连，1x1 输出头",
+   "n_params": 31037633,
+   "loss": "BCEWithLogits + 软 Dice（L = BCE + 1 - softDice，eps=1）",
+   "optimizer": "Adam lr=0.0001",
+   "batch_size": "16（显存探针不过自动降 8）",
+   "input": "256x256（OOM 兜底降 224）",
+   "max_epochs": 200,
+   "epoch_budget_note": "实验方案原定 epoch<=50；实测该预算下 U-Net 严重欠收敛（Kvasir 全量 train Dice 停于 0.41，各 lr 同平台；16 张过拟合测试证明模型/损失/数据健康；根因为每图仅约 50 次更新，文献 Kvasir U-Net 每图 100+ 次更新达 Dice 0.79），为保证少样本学习曲线可回答论文核心问题，统一放宽至 200 epoch，其余超参不变（诊断记录见 logs/unet_*.log 与 STATE.md）",
+   "early_stopping": "patience=5，预热 15 epoch，监控验证损失（BCE+软Dice，无阈值，平滑；阈值化 val Dice 在欠训练期噪声极大——预测概率在 0.5 附近整体翻转，曾致 patience-5 在 ~ep20 随机触发、200 epoch 预算用不满），mode=min，恢复最佳权重；阈值化 val Dice 同时记录（marker 的 val_dice_at_best）"
+  },
+  "protocol": {
+   "splits": "splits.json 训练集（seed=42 洗牌顺序）末 1/10 固定为验证集（仅早停，任何档位不参与训练）：Kvasir-SEG 80 / ISIC2018 207；其余 90% 为训练池：720 / 1868",
+   "tiers": "n=20 / 100 = 训练池前 n 张；full = 训练池全部（Kvasir-SEG n=720 / ISIC2018 n=1868）",
+   "preprocess": "图像 PIL 双线性 resize 至 256x256 后 /255；mask 最近邻 resize + >=128 二值化（Phase 1 约定，与实验 A 一致）",
+   "augmentation": "训练期水平/垂直翻转各 p=0.5（图像与 mask 同步）；验证/测试不增强",
+   "test_protocol": "与实验 A 同一测试集（Kvasir-SEG test 200 全量；ISIC2018 test 前 500/519）与同一 Dice 惯例（两空=1.0、恰一空=0.0、macro=算术平均）；U-Net 概率图（256x256）双线性回原始分辨率后 0.5 阈值，与 MedSAM 推理协议对齐",
+   "seed": 42,
+   "determinism": "random/numpy/torch/cuda 全部 seed=42；DataLoader shuffle 用独立 torch.Generator().manual_seed(42)；cudnn.benchmark=True（速度优先）",
+   "precision": "bf16 混合精度（torch.autocast 包模型前向；损失/概率/Dice 计算 fp32）。原因：本机 RTX 5060 Laptop 功耗受限（默认功耗墙 50W，实测满载 30W/1080MHz，fp32 单步 1.0-1.7s、bf16 0.43s），属性能优化，不改变训练协议",
+   "power_note": "训练期已将 Windows 电源计划由'平衡'切至'高性能'（GPU 功耗 30W→满载提升，实测 fp32 提速约 45%），复现实验时建议同样设置",
+   "oom_fallback": "启动显存探针（零张量前向+反向，不污染权重/BN）不过则 batch 16->8、再 256->224；各档位实际配置见 results/unet_runs/*.json 的 batch_size/img_size"
+  },
+  "results": {
+   "Kvasir-SEG": {
+    "n=20": {
+     "n_train": 20,
+     "n_test": 200,
+     "macro_dice": 0.395581,
+     "n_pred_empty": 5,
+     "best_epoch": 30,
+     "epochs_run": 35,
+     "best_val_loss": 1.212211,
+     "val_dice_at_best": 0.394791,
+     "batch_size": 16,
+     "img_size": 256,
+     "n_val": 80,
+     "pool_size": 720,
+     "total_train": 800,
+     "checkpoint": "checkpoints\\unet_Kvasir-SEG_20.pth",
+     "precision": "bf16 autocast（模型前向 bf16，损失/指标 fp32）",
+     "oom_downgrades": [],
+     "early_stop_monitor": "val_loss（BCE+软Dice，无阈值，平滑）"
+    },
+    "n=100": {
+     "n_train": 100,
+     "n_test": 200,
+     "macro_dice": 0.44156,
+     "n_pred_empty": 5,
+     "best_epoch": 24,
+     "epochs_run": 29,
+     "best_val_loss": 1.075487,
+     "val_dice_at_best": 0.419848,
+     "batch_size": 16,
+     "img_size": 256,
+     "n_val": 80,
+     "pool_size": 720,
+     "total_train": 800,
+     "checkpoint": "checkpoints\\unet_Kvasir-SEG_100.pth",
+     "precision": "bf16 autocast（模型前向 bf16，损失/指标 fp32）",
+     "oom_downgrades": [],
+     "early_stop_monitor": "val_loss（BCE+软Dice，无阈值，平滑）"
+    },
+    "n=720": {
+     "n_train": 720,
+     "n_test": 200,
+     "macro_dice": 0.570244,
+     "n_pred_empty": 0,
+     "best_epoch": 30,
+     "epochs_run": 35,
+     "best_val_loss": 0.826012,
+     "val_dice_at_best": 0.584964,
+     "batch_size": 16,
+     "img_size": 256,
+     "n_val": 80,
+     "pool_size": 720,
+     "total_train": 800,
+     "checkpoint": "checkpoints\\unet_Kvasir-SEG_720.pth",
+     "precision": "bf16 autocast（模型前向 bf16，损失/指标 fp32）",
+     "oom_downgrades": [],
+     "early_stop_monitor": "val_loss（BCE+软Dice，无阈值，平滑）"
+    }
+   },
+   "ISIC2018": {
+    "n=20": {
+     "n_train": 20,
+     "n_test": 500,
+     "macro_dice": 0.61486,
+     "n_pred_empty": 9,
+     "best_epoch": 30,
+     "epochs_run": 35,
+     "best_val_loss": 1.105754,
+     "val_dice_at_best": 0.603803,
+     "batch_size": 16,
+     "img_size": 256,
+     "n_val": 207,
+     "pool_size": 1868,
+     "total_train": 2075,
+     "checkpoint": "checkpoints\\unet_ISIC2018_20.pth",
+     "precision": "bf16 autocast（模型前向 bf16，损失/指标 fp32）",
+     "oom_downgrades": [],
+     "early_stop_monitor": "val_loss（BCE+软Dice，无阈值，平滑）"
+    },
+    "n=100": {
+     "n_train": 100,
+     "n_test": 500,
+     "macro_dice": 0.725499,
+     "n_pred_empty": 2,
+     "best_epoch": 24,
+     "epochs_run": 29,
+     "best_val_loss": 0.82895,
+     "val_dice_at_best": 0.662632,
+     "batch_size": 16,
+     "img_size": 256,
+     "n_val": 207,
+     "pool_size": 1868,
+     "total_train": 2075,
+     "checkpoint": "checkpoints\\unet_ISIC2018_100.pth",
+     "precision": "bf16 autocast（模型前向 bf16，损失/指标 fp32）",
+     "oom_downgrades": [],
+     "early_stop_monitor": "val_loss（BCE+软Dice，无阈值，平滑）"
+    },
+    "n=1868": {
+     "n_train": 1868,
+     "n_test": 500,
+     "macro_dice": 0.829606,
+     "n_pred_empty": 0,
+     "best_epoch": 26,
+     "epochs_run": 31,
+     "best_val_loss": 0.410778,
+     "val_dice_at_best": 0.812175,
+     "batch_size": 16,
+     "img_size": 256,
+     "n_val": 207,
+     "pool_size": 1868,
+     "total_train": 2075,
+     "checkpoint": "checkpoints\\unet_ISIC2018_1868.pth",
+     "precision": "bf16 autocast（模型前向 bf16，损失/指标 fp32）",
+     "oom_downgrades": [],
+     "early_stop_monitor": "val_loss（BCE+软Dice，无阈值，平滑）"
+    }
+   }
+  },
+  "medsam_box_reference": {
+   "Kvasir-SEG": {
+    "macro_dice": 0.930684,
+    "n_samples": 200,
+    "source": "results/metrics.csv (experiment=prompt_strategy, setting=box)"
+   },
+   "ISIC2018": {
+    "macro_dice": 0.929824,
+    "n_samples": 500,
+    "source": "results/metrics.csv (experiment=prompt_strategy, setting=box)"
+   },
+   "Montgomery": {
+    "macro_dice": 0.976842,
+    "n_samples": 28,
+    "source": "results/metrics.csv (experiment=prompt_strategy, setting=box)"
+   }
+  },
+  "checkpoints": "checkpoints/unet_<dataset>_<n>.pth（含 state_dict + meta，实验C 跨数据集推理须遵循 meta 内 img_size/归一化/mask 规则）",
+  "per_sample_file": "results/per_sample_B.csv",
+  "pred_masks": "full 档位模型在每数据集前 20 张测试样本的预测 mask：results/preds_B/<dataset>/<sample_stem>.png（0/255，原始分辨率，与 preds_A 同样本便于四列对比）",
+  "figure": "figures/learning_curve.pdf（+png，300dpi，由 --figure-only 从 metrics.csv 生成）"
  }
 }
