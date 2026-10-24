@@ -1,0 +1,145 @@
+{
+ "prompt_strategy": {
+  "experiment": "实验A：MedSAM 零样本提示策略对比",
+  "script": "scripts/medsam_infer.py",
+  "date": "2026-10-24T14:44:54",
+  "model": {
+   "name": "MedSAM (ViT-B)",
+   "checkpoint": "checkpoints/medsam_vit_b.pth",
+   "source": "Zenodo 官方 DOI 存档 https://zenodo.org/records/10689643",
+   "verification": {
+    "path": "checkpoints\\medsam_vit_b.pth",
+    "exists": true,
+    "size_bytes": 375049145,
+    "torch_load_ok": true,
+    "n_keys": 314,
+    "first_keys": [
+     "image_encoder.neck.0.weight",
+     "image_encoder.neck.1.weight",
+     "image_encoder.neck.1.bias",
+     "image_encoder.neck.2.weight",
+     "image_encoder.neck.3.weight",
+     "image_encoder.neck.3.bias",
+     "image_encoder.patch_embed.proj.weight",
+     "image_encoder.patch_embed.proj.bias"
+    ],
+    "prefix_ok": true,
+    "error": null,
+    "all_key_prefixes": [
+     "image_encoder",
+     "mask_decoder",
+     "prompt_encoder"
+    ],
+    "loaded_object_type": "dict"
+   }
+  },
+  "inference_protocol": {
+   "pipeline": "复刻 MedSAM 官方 inference.py：resize 1024x1024 (bicubic+antialias) → uint8 化 → min-max 归一化 → image_encoder → prompt_encoder(boxes) → mask_decoder(multimask_output=False) → sigmoid → 双线性回原始 H×W → 0.5 阈值",
+   "box_scaling": "box_1024 = box / [W,H,W,H] * 1024（官方 stretch 缩放，非 letterbox）",
+   "segment_anything_pkg": "pip segment-anything==1.0（Meta 官方包，清华源安装）",
+   "grayscale": "灰度图（Montgomery 胸片）统一 convert('RGB') 三通道输入"
+  },
+  "prompt_settings": {
+   "box": "GT 外接框：由二值 GT mask 计算 [min_x, min_y, max_x+1, max_y+1]，三数据集统一协议",
+   "box_perturb_10pct": "GT 外接框每坐标独立加 U(-0.1,0.1)×(框宽/高)，clamp 到图像内且保持≥1px",
+   "center_point": "GT 前景质心（前景像素坐标均值；双肺并集等凹形目标可能落在前景外，如实保留）",
+   "random_point": "GT 前景内均匀随机像素"
+  },
+  "point_prompt_implementation": "MedSAM 官方推理代码仅支持 box 提示（训练亦只用框），故点提示按实验方案指示转为伪框：以给定点为中心、半边长=0.05*max(H,W)（即边长为图像长边 10%）的正方形，clamp 到图像内，走与框提示完全相同的通路；不使用任何 GT 尺寸信息。",
+  "randomness": "主种子 42；box_perturb_10pct 与 random_point 由逐样本种子 random.Random('42|{dataset}|{setting}|{sample_id}') 生成，与处理顺序无关，可复现",
+  "dice_convention": "逐样本 Dice=2|P∩G|/(|P|+|G|)；GT 与预测同为空记 1.0（两空一致）；恰一方为空记 0.0；macro Dice=逐样本 Dice 的算术平均。三数据集 Phase 1 已验证无空 GT，故实际仅预测可能为空（记 0）",
+  "test_sets": {
+   "Kvasir-SEG": {
+    "n_test": 200,
+    "n_used": 200,
+    "sampling": "test 全量 200 张（≤500）"
+   },
+   "ISIC2018": {
+    "n_test": 519,
+    "n_used": 500,
+    "sampling": "test 共 519 张，取 splits.json 顺序（seed=42 洗牌产物）前 500 张"
+   },
+   "Montgomery": {
+    "n_test": 28,
+    "n_used": 28,
+    "sampling": "test 全量 28 张（≤500）"
+   }
+  },
+  "kavsir_bbox_check": {
+   "n_compared": 200,
+   "mean_box_iou": 0.914998,
+   "min_box_iou": 0.062563,
+   "note": "实验A 的框提示统一由二值 GT mask 现算外接框（三数据集同协议）；此检查说明其与 Kvasir 官方自带 kavsir_bboxes.json 基本一致"
+  },
+  "results": {
+   "Kvasir-SEG": {
+    "box": {
+     "n_samples": 200,
+     "macro_dice": 0.930684,
+     "n_pred_empty": 0
+    },
+    "box_perturb_10pct": {
+     "n_samples": 200,
+     "macro_dice": 0.875123,
+     "n_pred_empty": 0
+    },
+    "center_point": {
+     "n_samples": 200,
+     "macro_dice": 0.092515,
+     "n_pred_empty": 0
+    },
+    "random_point": {
+     "n_samples": 200,
+     "macro_dice": 0.083968,
+     "n_pred_empty": 0
+    }
+   },
+   "ISIC2018": {
+    "box": {
+     "n_samples": 500,
+     "macro_dice": 0.929824,
+     "n_pred_empty": 0
+    },
+    "box_perturb_10pct": {
+     "n_samples": 500,
+     "macro_dice": 0.884735,
+     "n_pred_empty": 0
+    },
+    "center_point": {
+     "n_samples": 500,
+     "macro_dice": 0.148288,
+     "n_pred_empty": 0
+    },
+    "random_point": {
+     "n_samples": 500,
+     "macro_dice": 0.102453,
+     "n_pred_empty": 0
+    }
+   },
+   "Montgomery": {
+    "box": {
+     "n_samples": 28,
+     "macro_dice": 0.976842,
+     "n_pred_empty": 0
+    },
+    "box_perturb_10pct": {
+     "n_samples": 28,
+     "macro_dice": 0.867897,
+     "n_pred_empty": 0
+    },
+    "center_point": {
+     "n_samples": 28,
+     "macro_dice": 6.9e-05,
+     "n_pred_empty": 0
+    },
+    "random_point": {
+     "n_samples": 28,
+     "macro_dice": 0.031938,
+     "n_pred_empty": 0
+    }
+   }
+  },
+  "per_sample_file": "results/per_sample_A.csv",
+  "pred_masks": "每数据集前 20 张测试样本的 box 提示预测 mask，存 results/preds_A/<dataset>/<sample_stem>.png（0/255，原始分辨率）"
+ }
+}
