@@ -4,13 +4,21 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 
-# 大文件：数据集与模型权重不入库
-data/
+# 大文件：原始数据与模型权重不入库（例外规则见下）
+data/*
+!data/README.md
+!data/*/
+data/*/**
+!data/*/stats.json
+!data/*/splits.json
 checkpoints/
+*.pth
 
-# 日志
+# 日志与临时文件
 logs/
 *.log
+*.tmp
+*~
 
 # LaTeX 编译产物（保留 .tex/.bib/.pdf）
 *.aux
@@ -23,6 +31,7 @@ logs/
 *.toc
 *.lof
 *.lot
+*.xdv
 
 # 系统文件
 .DS_Store
