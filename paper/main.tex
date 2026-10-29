@@ -9,6 +9,8 @@
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{multirow}
+\usepackage{makecell}
+\usepackage[uppercasefamily=true]{gbt7714}
 \usepackage{float}
 \usepackage{caption}
 \usepackage{enumitem}
@@ -43,6 +45,8 @@
 \end{titlepage}
 
 % ==================== 正文页码从 1 开始 ====================
+\newgeometry{left=2.4cm,right=2.4cm,top=2.6cm,bottom=2.6cm}
+\linespread{1.15}\selectfont
 \pagenumbering{arabic}
 \setcounter{page}{1}
 
@@ -128,9 +132,9 @@ MedSAM~\cite{ma2024segment}是目前最具代表性的医学分割基础模型�
 \label{tab:stats}
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{lllrrrl}
+\begin{tabular}{ccccccc}
 \toprule
-数据集 & 模态 & 任务 & 对数 & 训练/测试 & 实验用测试集 & 分辨率范围（宽$\times$高, px） \\
+数据集 & 模态 & 任务 & 对数 & 训练/测试 & \makecell{实验用\\测试集} & \makecell{分辨率范围\\（宽$\times$高, px）} \\
 \midrule
 Kvasir-SEG & 彩色内镜 & 胃肠息肉分割 & 1000 & 800/200 & 200 & 332--1920 $\times$ 352--1072 \\
 ISIC2018   & 皮肤镜   & 皮肤病变分割 & 2594 & 2075/519 & 500 & 576--6748 $\times$ 540--4499 \\
@@ -152,34 +156,32 @@ Montgomery & 灰度胸片 & 肺野分割     & 138  & 110/28   & 28  & 4020--489
   lab/.style={font=\small\itshape, text=black!65},
   arrow/.style={-{Latex[length=2mm]}, thick}
 ]
-% 输入列
-\node[gray] (img) at (0,0.75) {输入图像\\（三数据集）};
-\node[gray] (gt)  at (0,-1.25) {GT 标注\\（像素级掩码）};
-% 提示构造
-\node[gray] (prompt) at (2.7,-0.25) {提示构造\\框 / 扰动框 / 点};
-% MedSAM 分支
-\node[box] (ienc) at (2.9,1.6) {图像编码器\\（ViT-B）};
-\node[box] (penc) at (5.55,-0.25) {提示编码器};
-\node[box] (dec) at (7.9,0.75) {Mask 解码器};
-\node[lab] at (5.4,2.5) {MedSAM 零样本分支};
-% U-Net 分支
-\node[box2] (unet) at (5.4,-2.6) {U-Net\\（256$\times$256，少样本训练\\$n=20/100/$全量）};
-\node[lab] at (5.4,-4.35) {专用模型分支};
-% 后处理与评估
-\node[gray] (post) at (11.1,0.75) {双线性回原分辨率\\+ 0.5 阈值};
-\node[gray] (dice) at (13.9,0.75) {逐样本 Dice\\$\rightarrow$ macro 汇总};
-% 箭头
+% 输入列与两条分支：分层布置，避免节点和连线相互遮挡。
+\node[gray] (img) at (0,1.2) {输入图像\\（三数据集）};
+\node[gray] (gt) at (0,-1.3) {GT 标注\\（像素级掩码）};
+\node[gray] (prompt) at (3,-1.3) {提示构造\\框 / 扰动框 / 点};
+\node[box] (ienc) at (3,1.2) {图像编码器\\（ViT-B）};
+\node[box] (penc) at (6,-1.3) {提示编码器};
+\node[box] (dec) at (8.5,1.2) {Mask 解码器};
+\node[lab] at (5.8,2.55) {MedSAM 零样本分支};
+\node[box2] (unet) at (6,-3.1) {U-Net\\（256$\times$256，少样本训练\\$n=20/100/$全量）};
+\node[lab] at (6,-4.15) {专用模型分支};
+\node[gray] (post) at (11.7,1.2) {双线性回原分辨率\\+ 0.5 阈值};
+\node[gray] (dice) at (15,1.2) {逐样本 Dice\\$\rightarrow$ macro 汇总};
 \draw[arrow] (img.east) -- (ienc.west);
-\draw[arrow] (gt.north) |- (prompt.west);
+\draw[arrow] (gt.east) -- (prompt.west);
 \draw[arrow] (prompt.east) -- (penc.west);
-\draw[arrow] (ienc.east) -- ([yshift=1.5mm]dec.west);
-\draw[arrow] (penc.east) -- ([yshift=-1.5mm]dec.west);
-\draw[arrow] (gt.south) |- node[pos=0.35, right=1pt, lab] {训练标签} ([yshift=-2mm]unet.west);
-\draw[arrow] (img.west) -- ++(-0.3,0) |- ([yshift=2mm]unet.west);
+\draw[arrow] (ienc.east) -- (dec.west);
+\draw[arrow] (penc.east) -| ([xshift=-3mm]dec.south);
+\draw[arrow] (gt.south) |- ([yshift=-2mm]unet.west);
+\node[lab] at (2.2,-3.55) {训练标签};
 \draw[arrow] (dec.east) -- (post.west);
-\draw[arrow] (unet.east) -| ([xshift=-4mm]post.south) -- ([xshift=-4mm]post.south |- post.south);
+\draw[arrow] (unet.east) -| ([xshift=-3mm]post.south);
 \draw[arrow] (post.east) -- (dice.west);
-\draw[arrow] ([xshift=2mm]gt.south) -- ([xshift=2mm]gt.south |- 0,-3.45) -| node[pos=0.25, below=1pt, lab] {评估 GT} ([xshift=-9mm]dice.south);
+\draw[arrow] (gt.south) -- ++(0,-3.45) -| node[pos=0.35, below, lab] {评估 GT} (dice.south);
+% 图像输入在 GT 竖线交叉处留白，明确表示连线不相接。
+\draw[arrow, preaction={draw=white, line width=3.5pt}]
+  (img.west) -- ++(-0.65,0) |- ([yshift=2mm]unet.west);
 \end{tikzpicture}}%
 \caption{方法框架。上支为 MedSAM 零样本推理（提示由 GT 派生：外接框 / $\pm10\%$ 扰动框 / 中心点 / 随机点）；下支为 U-Net 少样本训练与推理；两分支输出统一经过``双线性回原分辨率 + 0.5 阈值''后处理后，在同一测试集上以逐样本宏观 Dice 评估。}
 \label{fig:framework}
@@ -209,9 +211,9 @@ Montgomery & 灰度胸片 & 肺野分割     & 138  & 110/28   & 28  & 4020--489
 \centering
 \caption{实验 A：MedSAM 零样本推理的提示策略对比（测试集 macro Dice）}
 \label{tab:prompt}
-\begin{tabular}{lrrrrr}
+\begin{tabular}{cccccc}
 \toprule
-数据集 & $n$ & GT 外接框 & 框 $\pm10\%$ 扰动 & 中心点 & 随机点 \\
+数据集 & $n$ & GT 外接框 & \makecell{框 $\pm10\%$\\扰动} & 中心点 & 随机点 \\
 \midrule
 Kvasir-SEG & 200 & 0.930684 & 0.875123 & 0.092515 & 0.083968 \\
 ISIC2018   & 500 & 0.929824 & 0.884735 & 0.148288 & 0.102453 \\
@@ -239,9 +241,9 @@ Montgomery & 28  & 0.976842 & 0.867897 & 0.000069 & 0.031938 \\
 \label{tab:fewshot}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{llrrr}
+\begin{tabular}{ccccc}
 \toprule
-数据集 & MedSAM 零样本（GT 框） & $n=20$ & $n=100$ & $n=$ 全量 \\
+数据集 & \makecell{MedSAM 零样本\\（GT 框）} & $n=20$ & $n=100$ & $n=$ 全量 \\
 \midrule
 Kvasir-SEG（全量 $n=720$）  & 0.930684 & 0.395581 & 0.441560 & 0.570244 \\
 ISIC2018（全量 $n=1868$）   & 0.929824 & 0.614860 & 0.725499 & 0.829606 \\
@@ -264,9 +266,9 @@ ISIC2018（全量 $n=1868$）   & 0.929824 & 0.614860 & 0.725499 & 0.829606 \\
 \label{tab:cross}
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{lrrrr}
+\begin{tabular}{ccccc}
 \toprule
-目标测试集 & U-Net（Kvasir$\rightarrow\cdot$） & U-Net（ISIC$\rightarrow\cdot$） & 同域 U-Net & MedSAM 零样本 \\
+目标测试集 & \makecell{U-Net\\（Kvasir$\rightarrow\cdot$）} & \makecell{U-Net\\（ISIC$\rightarrow\cdot$）} & 同域 U-Net & \makecell{MedSAM\\零样本} \\
 \midrule
 Kvasir-SEG（$n=200$） & --- & 0.373964 & 0.570244 & 0.930684 \\
 ISIC2018（$n=500$）   & 0.238664 & --- & 0.829606 & 0.929824 \\
@@ -305,7 +307,7 @@ Montgomery（$n=28$）  & 0.206529 & 0.666025 & ---（未训练） & 0.976842 \\
 本文以``综述 + 统一协议实验''的方式研究了医学影像分割的基础模型方法。综述部分梳理了从 U-Net 及其变体、nnU-Net 到 SAM、MedSAM 及其医学域适配家族的技术脉络；实验部分在 Kvasir-SEG、ISIC2018 与 Montgomery 三个模态各异的数据集上，以统一的逐样本宏观 Dice 口径得到三个主要发现：其一，MedSAM 零样本推理在 GT 框提示下达到 0.929824--0.976842 的 macro Dice，$\pm10\%$ 框扰动仅损失约 0.05--0.11，而点提示（伪框实现）崩塌至 0.000069--0.148288，提示形式敏感性必须显式验证；其二，统一训练预算下 U-Net 即使用尽全部训练标注（720/1868 张）仍未追平 MedSAM 零样本，差距分别为 0.360440 与 0.100218，且曲线未见闭合迹象；其三，专用模型跨数据集衰减 $-0.196280$ 至 $-0.590942$、跨模态绝对值低至 0.206529，而 MedSAM 零样本跨模态保持 0.93 以上，基础模型的泛化优势得到直接证据支持。综合而言，框提示零样本基础模型已可作为医学分割新任务的默认起点，像素级标注预算应集中投向基础模型失效的疑难样本；后续工作将扩展至三维模态、混合提示训练与参数高效适配，并在人机交互设定下评估真实临床流程中的表现。
 
 % ==================== 参考文献 ====================
-\bibliographystyle{plain}
+\bibliographystyle{gbt7714-numeric}
 \bibliography{refs}
 
 \end{document}
