@@ -1,5 +1,5 @@
 # Build from paper/ so bibliography and figure paths resolve correctly.
-# Preserve both existing main.pdf files; publish the review as main(1).pdf.
+# Publish only the current paper/main.pdf.
 $ErrorActionPreference = 'Stop'
 $rootDir = Split-Path -Parent $PSScriptRoot
 $paperDir = Join-Path $rootDir 'paper'
@@ -26,8 +26,8 @@ try {
     if ($log -match '(Citation|Reference)[^\r\n]*undefined|There were undefined|Missing character|Overfull \\[hv]box') {
         throw 'Unresolved reference, missing glyph, or overfull box; inspect logs/latex-review/main-review.log.'
     }
-    Copy-Item -LiteralPath (Join-Path $buildDir 'main-review.pdf') -Destination (Join-Path $rootDir 'main(1).pdf')
-    Write-Host 'Review PDF written: main(1).pdf'
+    Copy-Item -LiteralPath (Join-Path $buildDir 'main-review.pdf') -Destination (Join-Path $paperDir 'main.pdf')
+    Write-Host 'Paper PDF written: paper/main.pdf'
 }
 finally {
     $env:BIBINPUTS = $oldBibInputs

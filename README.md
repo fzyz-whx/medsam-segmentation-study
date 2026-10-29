@@ -16,7 +16,7 @@
 
 ## 内容与复现
 
-- `paper/`：论文源码、参考文献和 PDF；`main.pdf` 是相同的最新论文。`main(1).pdf` 保留此前排版版本。
+- `paper/`：论文源码、参考文献和最新论文 `main.pdf`。
 - `results/`：逐样本指标、汇总和部分预测掩码；`figures/`：论文图表。
 - `data/`：数据集划分与统计。原始影像、标注和模型权重不在仓库中；数据来源和处理见 [data/README.md](data/README.md)，使用前请遵守各数据集及权重的原始许可和使用条件。
 - `scripts/`：数据准备、推理、训练及图表脚本。需要 Python、PyTorch、NumPy、Pillow、Matplotlib 和 `segment-anything`；需按平台配置 PyTorch 环境。完整的依赖版本锁定文件未提供。
@@ -29,6 +29,8 @@ bibtex main
 xelatex -interaction=nonstopmode -halt-on-error main.tex
 xelatex -interaction=nonstopmode -halt-on-error main.tex
 ```
+
+PowerShell 下也可在仓库根目录运行 `./scripts/build_paper.ps1`，成品写入 `paper/main.pdf`。
 
 实验复现前，按 `data/README.md` 准备三个数据集，并将 [MedSAM 官方权重](https://zenodo.org/records/10689643) 放到 `checkpoints/medsam_vit_b.pth`。然后可运行：
 
